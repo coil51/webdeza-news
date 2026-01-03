@@ -1,0 +1,42 @@
+[
+{
+  "id": "zenn",
+  "name": "Zenn",
+  "siteUrl": "https://zenn.dev",
+  "rssUrl": "https://zenn.dev/feed",
+  "category": "tech",
+  "accentColor": "#3ea8ff"
+},
+{
+  "id": "qiita",
+  "name": "Qiita Popular",
+  "siteUrl": "https://qiita.com",
+  "rssUrl": "https://qiita.com/popular-items/feed",
+  "category": "tech",
+  "accentColor": "#55c500"
+},
+{
+  "id": "ics",
+  "name": "ICS MEDIA",
+  "siteUrl": "https://ics.media",
+  "rssUrl": "https://ics.media/feed/",
+  "category": "frontend",
+  "accentColor": "#ff6b00"
+},
+{
+  "id": "css-tricks",
+  "name": "CSS-Tricks",
+  "siteUrl": "https://css-tricks.com",
+  "rssUrl": "https://css-tricks.com/feed/",
+  "category": "frontend",
+  "accentColor": "#2e8b57"
+},
+{
+  "id": "smashing",
+  "name": "Smashing Magazine",
+  "siteUrl": "https://www.smashingmagazine.com",
+  "rssUrl": "https://www.smashingmagazine.com/feed/",
+  "category": "design",
+  "accentColor": "#d7263d"
+}
+]

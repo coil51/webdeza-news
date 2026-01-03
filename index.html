@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webデザニュース｜Webデザイン・フロントエンド最新情報まとめ</title>
+  <meta name="description" content="webデザイン・フロントエンド・UI/UXに関する最新記事を、国内外の公式RSSから自動収集して紹介するニュースサイトです。">
+  <link rel="canonical" href="/">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer></script>
+  <script src="js/feed.js" defer></script>
+  <script id="structured-data" type="application/ld+json">{}</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">webデザニュース</div>
+      <nav class="site-nav" aria-label="主要なナビゲーション">
+        <a href="index.html" data-nav="top">TOP</a>
+        <a href="category.html?category=design" data-nav="design">DESIGN</a>
+        <a href="category.html?category=dev" data-nav="dev">DEV</a>
+        <a href="category.html?category=news" data-nav="news">NEWS</a>
+        <a href="category.html?category=life" data-nav="life">LIFE</a>
+        <a href="about.html" data-nav="about">ABOUT</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="ad-slot ad-slot--top" data-slot="top-main"></div>
+
+  <main class="site-main container">
+    <section class="intro">
+      <p>design / dev / news / life の4カテゴリから、最新のRSS記事を自動で収集し、テック系ダッシュボード感覚でチェックできるようにしています。</p>
+    </section>
+
+    <div id="feed-grid" class="card-grid"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© webデザニュース</p>
+      <p>掲載している記事タイトル・概要等の著作権は各配信元に帰属します。</p>
+    </div>
+  </footer>
+</body>
+</html>
