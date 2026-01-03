@@ -1,42 +1,39 @@
 [
 {
+  "_comment": "サンプルデータ。実運用時は feedUrl / siteUrl / category / thumbnail を差し替えてください。category は nav に合わせて design|dev|news|life のいずれか。",
+  "id": "smashing",
+  "name": "Smashing Magazine",
+  "category": "design",
+  "feedUrl": "https://www.smashingmagazine.com/feed/",
+  "siteUrl": "https://www.smashingmagazine.com",
+  "thumbnail": "https://www.smashingmagazine.com/images/favicon/apple-touch-icon.png",
+  "accentColor": "#d7263d"
+},
+{
   "id": "zenn",
   "name": "Zenn",
+  "category": "dev",
+  "feedUrl": "https://zenn.dev/feed",
   "siteUrl": "https://zenn.dev",
-  "rssUrl": "https://zenn.dev/feed",
-  "category": "tech",
+  "thumbnail": "",
   "accentColor": "#3ea8ff"
-},
-{
-  "id": "qiita",
-  "name": "Qiita Popular",
-  "siteUrl": "https://qiita.com",
-  "rssUrl": "https://qiita.com/popular-items/feed",
-  "category": "tech",
-  "accentColor": "#55c500"
-},
-{
-  "id": "ics",
-  "name": "ICS MEDIA",
-  "siteUrl": "https://ics.media",
-  "rssUrl": "https://ics.media/feed/",
-  "category": "frontend",
-  "accentColor": "#ff6b00"
 },
 {
   "id": "css-tricks",
   "name": "CSS-Tricks",
+  "category": "news",
+  "feedUrl": "https://css-tricks.com/feed/",
   "siteUrl": "https://css-tricks.com",
-  "rssUrl": "https://css-tricks.com/feed/",
-  "category": "frontend",
+  "thumbnail": "",
   "accentColor": "#2e8b57"
 },
 {
-  "id": "smashing",
-  "name": "Smashing Magazine",
-  "siteUrl": "https://www.smashingmagazine.com",
-  "rssUrl": "https://www.smashingmagazine.com/feed/",
-  "category": "design",
-  "accentColor": "#d7263d"
+  "id": "ics",
+  "name": "ICS MEDIA",
+  "category": "life",
+  "feedUrl": "https://ics.media/feed/",
+  "siteUrl": "https://ics.media",
+  "thumbnail": "",
+  "accentColor": "#ff6b00"
 }
 ]

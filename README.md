@@ -20,19 +20,23 @@
 5. ブラウザで `index.html` / `category.html` を開き、記事が表示されることを確認。
 
 ## allowHosts（SSRF 対策）
-- `worker/rss-proxy.js` の `allowHosts` は公開対象 5 ホストを許可済みです: `zenn.dev` / `qiita.com` / `ics.media` / `css-tricks.com` / `www.smashingmagazine.com`
-- ホワイトリスト外は 403 で拒否します（空リストでも拒否）。
-- **運用ルール**: `data/feeds.json` を更新したら、同じホストを `allowHosts` にも追加してください。
+- 現在は `functions/api/rss.js` で `data/feeds.json` を読み、`feedUrl` / `siteUrl` の hostname を自動で許可します。
+- feeds.json に無いホストは 403 で拒否されます（空リスト時も 403）。
 
-## ローカル確認のヒント
-- Cloudflare の「ワーカーをプレビュー」機能、もしくは `wrangler dev worker/rss-proxy.js` で `/api/rss?url=...` を叩いて動作を確認できます。
-- フロントは静的ファイルなので、任意の静的サーバー（例: `npx serve .`）で配信し、同一オリジンで `/api/rss` にアクセスできる状態にしてください。
+## ローカル/デプロイ後の動作確認
+- API 単体: `https://<your-pages-domain>/api/rss?url=<encodeURIComponent(feedUrl)>`  
+  例: `https://<your-pages-domain>/api/rss?url=https%3A%2F%2Fwww.smashingmagazine.com%2Ffeed%2F` が 200 で XML を返すこと。
+- SSRF 防御: feeds.json に無いホストを指定すると 403 になること  
+  例: `https://<your-pages-domain>/api/rss?url=https%3A%2F%2Fexample.com%2Frss.xml` → 403。
+- フロント: 静的サーバー（例: `npx serve .`）で配信し、  
+  - TOP: サイト別ブロックが並び、各ブロックに最新記事が 4 件表示されること  
+  - カテゴリ: `category.html?category=design` などで該当カテゴリのみ表示されること
 
 ## 運用チェックリスト
-- RSS 追加手順: 1) `data/feeds.json` に `rssUrl` を追加 2) `allowHosts` に hostname を追加 3) Worker を再デプロイ
-- 動作確認: Worker 単体は `/api/rss?url=...` で XML が返るか、フロントは CORS エラーなく RSS が表示されるか
-- トラブルシュート: 403 は `allowHosts` 漏れ、500 は RSS URL 誤りや配信元停止を疑う
-- 回復性: 一部の取得が失敗しても `Promise.allSettled` で全体表示は継続
+- RSS 追加手順: `data/feeds.json` に `{id,name,category,feedUrl,siteUrl,thumbnail,accentColor}` を追加（カテゴリは nav と同じ design/dev/news/life）。デプロイ時はファイル更新のみで allowlist も自動反映。
+- 動作確認: `/api/rss?url=...` が 200 を返すこと、フロントで該当ブロックに記事が出ること。
+- トラブルシュート: 403 は feeds.json にホストが無い、500/502 は配信元エラーや URL 誤りを疑う。
+- 回復性: 一部の取得が失敗しても `Promise.allSettled` で全体表示は継続。
 ## 既知の制限
 - RSS 配信元がダウンしている場合や、フィードが壊れている場合はカードに「取得失敗」が表示されます。
 - `/api/rss` で 403 が返る場合は、`allowHosts` に対象ホストが未登録である可能性があります。

@@ -1,6 +1,5 @@
 const FEED_INDEX_LIMIT = 30;
-const INDEX_ITEMS_PER_FEED = 3;
-const CATEGORY_ITEMS_PER_FEED = 5;
+const ITEMS_PER_FEED = 6;
 const PROXY_ENDPOINT = "/api/rss";
 const REQUEST_TIMEOUT_MS = 10_000;
 
@@ -66,9 +65,14 @@ const fetchRssItems = async (feed, maxItems = 5) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+  const targetUrl = feed?.feedUrl || feed?.rssUrl;
+  if (!targetUrl) {
+    return { items: [], error: "RSS URL が設定されていません" };
+  }
+
   try {
     const response = await fetch(
-      `${PROXY_ENDPOINT}?url=${encodeURIComponent(feed.rssUrl)}`,
+      `${PROXY_ENDPOINT}?url=${encodeURIComponent(targetUrl)}`,
       { cache: "no-store", signal: controller.signal }
     );
     if (!response.ok) {
@@ -134,106 +138,6 @@ const formatDate = (raw) => {
   }).format(parsed);
 };
 
-const createCard = (item) => {
-  const card = document.createElement("article");
-  card.className = "card";
-  card.style.setProperty("--card-accent", item.feed.accentColor || "#00ff99");
-
-  const header = document.createElement("div");
-  header.className = "card-header";
-
-  const siteLabel = document.createElement("span");
-  siteLabel.className = "site-label";
-  siteLabel.textContent = item.feed.name;
-
-  const siteBadge = document.createElement("a");
-  siteBadge.className = "site-badge";
-  siteBadge.href = item.feed.siteUrl;
-  siteBadge.target = "_blank";
-  siteBadge.rel = "noopener noreferrer";
-  siteBadge.textContent = "SOURCE";
-
-  header.appendChild(siteLabel);
-  header.appendChild(siteBadge);
-
-  const titleLink = document.createElement("a");
-  titleLink.className = "card-title";
-  titleLink.href = item.link;
-  titleLink.target = "_blank";
-  titleLink.rel = "noopener noreferrer";
-  titleLink.textContent = item.title;
-
-  const description = document.createElement("p");
-  description.className = "card-description";
-  description.textContent =
-    item.description || "概要の取得に失敗しました。リンク先で詳細を確認してください。";
-
-  const footer = document.createElement("div");
-  footer.className = "card-footer";
-
-  const timeEl = document.createElement("time");
-  if (item.isoDate) timeEl.dateTime = item.isoDate;
-  timeEl.textContent = formatDate(item.pubDate);
-
-  const categoryEl = document.createElement("span");
-  categoryEl.className = "card-category";
-  categoryEl.textContent = `# ${item.feed.category}`;
-
-  footer.appendChild(timeEl);
-  footer.appendChild(categoryEl);
-
-  card.appendChild(header);
-  card.appendChild(titleLink);
-  card.appendChild(description);
-  card.appendChild(footer);
-
-  return card;
-};
-
-const createErrorCard = (feed, message) => {
-  const card = document.createElement("article");
-  card.className = "card card--error";
-  card.style.setProperty("--card-accent", feed.accentColor || "#ff6b6b");
-
-  const header = document.createElement("div");
-  header.className = "card-header";
-
-  const siteLabel = document.createElement("span");
-  siteLabel.className = "site-label";
-  siteLabel.textContent = feed.name;
-
-  const badge = document.createElement("span");
-  badge.className = "site-badge";
-  badge.textContent = "FAILED";
-
-  header.appendChild(siteLabel);
-  header.appendChild(badge);
-
-  const title = document.createElement("div");
-  title.className = "card-title";
-  title.textContent = "RSSの取得に失敗しました";
-
-  const description = document.createElement("p");
-  description.className = "card-description";
-  description.textContent = message || "フィードを読み込めませんでした。";
-
-  const footer = document.createElement("div");
-  footer.className = "card-footer";
-
-  const categoryEl = document.createElement("span");
-  categoryEl.className = "card-category";
-  categoryEl.textContent = `# ${feed.category}`;
-
-  footer.appendChild(categoryEl);
-
-  card.appendChild(header);
-  card.appendChild(title);
-  card.appendChild(description);
-  card.appendChild(footer);
-
-  return card;
-};
-
 const showEmptyState = (container, message) => {
   container.innerHTML = `<p class="empty-state">${message}</p>`;
 };
@@ -254,66 +158,146 @@ const updateStructuredData = (items) => {
   script.textContent = JSON.stringify(payload, null, 2);
 };
 
-const insertInlineAd = (container, slotName, position = 6) => {
-  if (!container || container.children.length === 0) return;
-  if (container.querySelector(`.ad-slot[data-slot="${slotName}"]`)) return;
-
-  const ad = document.createElement("div");
-  ad.className = "ad-slot ad-slot--inline";
-  ad.dataset.slot = slotName;
-
-  if (typeof window.__applyAdCopy === "function") {
-    window.__applyAdCopy(ad);
-  } else {
-    ad.textContent = `ここに ${slotName} 広告を配置`;
+const createFeedBlock = (feed, items, errorMessage) => {
+  const block = document.createElement("article");
+  block.className = "feed-block";
+  if (feed.accentColor) {
+    block.style.setProperty("--feed-accent", feed.accentColor);
   }
 
-  const reference = container.children[position] || null;
-  container.insertBefore(ad, reference);
+  const header = document.createElement("div");
+  header.className = "feed-block__header";
+
+  const thumb = document.createElement("div");
+  thumb.className = "feed-thumb";
+  if (feed.thumbnail) {
+    const img = document.createElement("img");
+    img.src = feed.thumbnail;
+    img.alt = `${feed.name} のスクリーンショット`;
+    thumb.appendChild(img);
+  } else {
+    thumb.textContent = (feed.name || feed.id || "RSS").slice(0, 2).toUpperCase();
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "feed-meta";
+
+  const title = document.createElement("h2");
+  title.className = "feed-title";
+  const siteLink = document.createElement("a");
+  siteLink.href = feed.siteUrl || "#";
+  siteLink.target = "_blank";
+  siteLink.rel = "noopener noreferrer";
+  siteLink.textContent = feed.name || feed.id || "Feed";
+  title.appendChild(siteLink);
+
+  const label = document.createElement("span");
+  label.className = "feed-label";
+  label.textContent = "最新の記事";
+
+  meta.appendChild(title);
+  meta.appendChild(label);
+
+  header.appendChild(thumb);
+  header.appendChild(meta);
+
+  block.appendChild(header);
+
+  if (errorMessage) {
+    const message = document.createElement("p");
+    message.className = "feed-empty";
+    message.textContent = errorMessage;
+    block.appendChild(message);
+    return block;
+  }
+
+  if (!items.length) {
+    const empty = document.createElement("p");
+    empty.className = "feed-empty";
+    empty.textContent = "記事を取得できませんでした。";
+    block.appendChild(empty);
+    return block;
+  }
+
+  const list = document.createElement("ul");
+  list.className = "feed-list";
+
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "feed-list__item";
+
+    if (item.isoDate) {
+      const timeEl = document.createElement("time");
+      timeEl.className = "feed-list__meta";
+      timeEl.dateTime = item.isoDate;
+      timeEl.textContent = formatDate(item.pubDate);
+      li.appendChild(timeEl);
+    } else {
+      const placeholder = document.createElement("span");
+      placeholder.className = "feed-list__meta";
+      placeholder.textContent = "—";
+      li.appendChild(placeholder);
+    }
+
+    const link = document.createElement("a");
+    link.className = "feed-list__link";
+    link.href = item.link;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
+    const titleEl = document.createElement("p");
+    titleEl.className = "feed-list__title";
+    titleEl.textContent = item.title;
+
+    link.appendChild(titleEl);
+    li.appendChild(link);
+
+    list.appendChild(li);
+  });
+
+  block.appendChild(list);
+  return block;
 };
 
 const renderIndexFeeds = async (container, feeds) => {
   container.innerHTML = '<p class="loading">最新記事を読み込み中...</p>';
 
   const settled = await Promise.allSettled(
-    feeds.map((feed) => fetchRssItems(feed, INDEX_ITEMS_PER_FEED))
+    feeds.map((feed) => fetchRssItems(feed, ITEMS_PER_FEED))
   );
 
-  const successfulItems = [];
-  const errorCards = [];
+  const fragment = document.createDocumentFragment();
+  const aggregated = [];
 
   settled.forEach((result, index) => {
     const feed = feeds[index];
     if (result.status === "fulfilled") {
       const { items, error } = result.value;
       if (items.length) {
-        successfulItems.push(...items);
+        const limited = items.slice(0, ITEMS_PER_FEED);
+        aggregated.push(...limited);
+        fragment.appendChild(createFeedBlock(feed, limited));
       } else {
-        errorCards.push(createErrorCard(feed, error || "RSSが空でした"));
+        fragment.appendChild(createFeedBlock(feed, [], error || "RSSが空でした"));
       }
     } else {
-      errorCards.push(createErrorCard(feed, "RSS取得で不明なエラーが発生しました"));
+      fragment.appendChild(createFeedBlock(feed, [], "RSS取得で不明なエラーが発生しました"));
     }
   });
 
-  const sorted = successfulItems
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, FEED_INDEX_LIMIT);
-
-  if (!sorted.length && !errorCards.length) {
+  if (!fragment.children.length) {
     showEmptyState(container, "現在表示できる記事がありません。");
     updateStructuredData([]);
     return;
   }
 
   container.innerHTML = "";
-  const fragment = document.createDocumentFragment();
-  sorted.forEach((item) => fragment.appendChild(createCard(item)));
-  errorCards.forEach((card) => fragment.appendChild(card));
   container.appendChild(fragment);
 
-  insertInlineAd(container, "inline-index", 6);
-  updateStructuredData(sorted);
+  const structured = aggregated
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, FEED_INDEX_LIMIT);
+  updateStructuredData(structured);
 };
 
 const renderCategoryFeeds = async (container, feeds) => {
@@ -332,29 +316,29 @@ const renderCategoryFeeds = async (container, feeds) => {
   }
 
   const settled = await Promise.allSettled(
-    targetFeeds.map((feed) => fetchRssItems(feed, CATEGORY_ITEMS_PER_FEED))
+    targetFeeds.map((feed) => fetchRssItems(feed, ITEMS_PER_FEED))
   );
 
-  const successfulItems = [];
-  const errorCards = [];
+  const fragment = document.createDocumentFragment();
+  const aggregated = [];
 
   settled.forEach((result, index) => {
     const feed = targetFeeds[index];
     if (result.status === "fulfilled") {
       const { items, error } = result.value;
       if (items.length) {
-        successfulItems.push(...items);
+        const limited = items.slice(0, ITEMS_PER_FEED);
+        aggregated.push(...limited);
+        fragment.appendChild(createFeedBlock(feed, limited));
       } else {
-        errorCards.push(createErrorCard(feed, error || "RSSが空でした"));
+        fragment.appendChild(createFeedBlock(feed, [], error || "RSSが空でした"));
       }
     } else {
-      errorCards.push(createErrorCard(feed, "RSS取得で不明なエラーが発生しました"));
+      fragment.appendChild(createFeedBlock(feed, [], "RSS取得で不明なエラーが発生しました"));
     }
   });
 
-  const sorted = successfulItems.sort((a, b) => b.timestamp - a.timestamp);
-
-  if (!sorted.length && !errorCards.length) {
+  if (!fragment.children.length) {
     showEmptyState(
       container,
       `${getReadableCategory(categorySlug)} カテゴリのRSSを取得できませんでした。`
@@ -364,13 +348,10 @@ const renderCategoryFeeds = async (container, feeds) => {
   }
 
   container.innerHTML = "";
-  const fragment = document.createDocumentFragment();
-  sorted.forEach((item) => fragment.appendChild(createCard(item)));
-  errorCards.forEach((card) => fragment.appendChild(card));
   container.appendChild(fragment);
 
-  insertInlineAd(container, `inline-${categorySlug}`, 4);
-  updateStructuredData(sorted);
+  const structured = aggregated.sort((a, b) => b.timestamp - a.timestamp);
+  updateStructuredData(structured);
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
