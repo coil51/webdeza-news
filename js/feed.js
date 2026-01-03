@@ -182,6 +182,9 @@ const createFeedBlock = (feed, items, errorMessage) => {
   const meta = document.createElement("div");
   meta.className = "feed-meta";
 
+  const metaTop = document.createElement("div");
+  metaTop.className = "feed-meta__top";
+
   const title = document.createElement("h2");
   title.className = "feed-title";
   const siteLink = document.createElement("a");
@@ -191,11 +194,27 @@ const createFeedBlock = (feed, items, errorMessage) => {
   siteLink.textContent = feed.name || feed.id || "Feed";
   title.appendChild(siteLink);
 
+  const sourceLink = document.createElement("a");
+  sourceLink.className = "feed-source";
+  sourceLink.href = feed.feedUrl || feed.siteUrl || "#";
+  sourceLink.target = "_blank";
+  sourceLink.rel = "noopener noreferrer";
+  sourceLink.title = "RSSを開く";
+  sourceLink.textContent = "SOURCE";
+  const sourceIcon = document.createElement("span");
+  sourceIcon.className = "feed-source__icon";
+  sourceIcon.ariaHidden = "true";
+  sourceIcon.textContent = "📡";
+  sourceLink.prepend(sourceIcon);
+
+  metaTop.appendChild(title);
+  metaTop.appendChild(sourceLink);
+
   const label = document.createElement("span");
   label.className = "feed-label";
   label.textContent = "最新の記事";
 
-  meta.appendChild(title);
+  meta.appendChild(metaTop);
   meta.appendChild(label);
 
   header.appendChild(thumb);
